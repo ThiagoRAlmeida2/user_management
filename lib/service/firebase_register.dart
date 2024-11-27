@@ -7,10 +7,14 @@ class FirebaseRegister {
 
   /// Método para registrar um usuário com email e senha
   static Future<String?> registerWithEmailPassword(
-      String email, String password) async {
+    String email,
+    String password,
+  ) async {
     try {
       await _auth.createUserWithEmailAndPassword(
-          email: email, password: password);
+        email: email,
+        password: password,
+      );
       return 'Registration successful'; // Mensagem de sucesso
     } on FirebaseAuthException catch (e) {
       if (e.code == 'email-already-in-use') {

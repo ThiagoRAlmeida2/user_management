@@ -5,6 +5,7 @@ import 'package:login_register_app/values/app_regex.dart';
 
 import '../components/app_text_form_field.dart';
 import '../resources/resources.dart';
+import '../service/firebase_login.dart';
 import '../utils/common_widgets/gradient_background.dart';
 import '../utils/helpers/navigation_helper.dart';
 import '../values/app_constants.dart';
@@ -21,7 +22,6 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
   final _formKey = GlobalKey<FormState>();
-
   final ValueNotifier<bool> passwordNotifier = ValueNotifier(true);
   final ValueNotifier<bool> fieldValidNotifier = ValueNotifier(false);
 
@@ -65,6 +65,27 @@ class _LoginPageState extends State<LoginPage> {
     super.dispose();
   }
 
+  Future<void> loginUser() async {
+    final firebaseLogin = FirebaseLogin();
+    final user = await firebaseLogin.signInWithEmailAndPassword(
+      emailController.text,
+      passwordController.text,
+    );
+
+    if (user != null) {
+      SnackbarHelper.showSnackBar(AppStrings.loggedIn);
+      emailController.clear(); // Limpa o campo de email
+      passwordController.clear(); // Limpa o campo de senha
+
+      // Navega para a tela inicial
+      await NavigationHelper.pushReplacementNamed(AppRoutes.login);
+    } else {
+      SnackbarHelper.showSnackBar(
+        'Login failed. Please try again.',
+      ); // Mensagem de erro
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -74,7 +95,7 @@ class _LoginPageState extends State<LoginPage> {
           const GradientBackground(
             children: [
               Text(
-                AppStrings.signInToYourNAccount,
+                AppStrings.signInToYourAccount,
                 style: AppTheme.titleLarge,
               ),
               SizedBox(height: 6),
@@ -147,12 +168,10 @@ class _LoginPageState extends State<LoginPage> {
                     builder: (_, isValid, __) {
                       return FilledButton(
                         onPressed: isValid
-                            ? () {
-                                SnackbarHelper.showSnackBar(
-                                  AppStrings.loggedIn,
-                                );
-                                emailController.clear();
-                                passwordController.clear();
+                            ? () async {
+                                if (_formKey.currentState!.validate()) {
+                                  await loginUser(); // Chama a função de login
+                                }
                               }
                             : null,
                         child: const Text(AppStrings.login),

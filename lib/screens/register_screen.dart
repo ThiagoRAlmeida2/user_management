@@ -1,67 +1,269 @@
-import 'package:flutter/material.dart';
-import '../service/firebase_register.dart'; // Caminho relativo para o arquivo firebase_register.dart
+import 'dart:async';
 
-class RegisterScreen extends StatefulWidget {
+import 'package:flutter/material.dart';
+import 'package:login_register_app/utils/helpers/snackbar_helper.dart';
+
+import '../components/app_text_form_field.dart';
+import '../service/firebase_register.dart';
+import '../utils/common_widgets/gradient_background.dart';
+import '../utils/helpers/navigation_helper.dart';
+import '../values/app_constants.dart';
+import '../values/app_regex.dart';
+import '../values/app_routes.dart';
+import '../values/app_strings.dart';
+import '../values/app_theme.dart';
+
+class RegisterPage extends StatefulWidget {
+  const RegisterPage({super.key});
+
   @override
-  _RegisterScreenState createState() => _RegisterScreenState();
+  State<RegisterPage> createState() => _RegisterPageState();
 }
 
-class _RegisterScreenState extends State<RegisterScreen> {
-  final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
-  String? _message;
+class _RegisterPageState extends State<RegisterPage> {
+  final _formKey = GlobalKey<FormState>();
+  late final TextEditingController nameController;
+  late final TextEditingController emailController;
+  late final TextEditingController passwordController;
+  late final TextEditingController confirmPasswordController;
+
+  final ValueNotifier<bool> passwordNotifier = ValueNotifier(true);
+  final ValueNotifier<bool> confirmPasswordNotifier = ValueNotifier(true);
+  final ValueNotifier<bool> fieldValidNotifier = ValueNotifier(false);
+  bool isLoading = false; // Para gerenciar o estado de carregamento
+
+  void initializeControllers() {
+    nameController = TextEditingController()..addListener(controllerListener);
+    emailController = TextEditingController()..addListener(controllerListener);
+    passwordController = TextEditingController()
+      ..addListener(controllerListener);
+    confirmPasswordController = TextEditingController()
+      ..addListener(controllerListener);
+  }
+
+  void disposeControllers() {
+    nameController.dispose();
+    emailController.dispose();
+    passwordController.dispose();
+    confirmPasswordController.dispose();
+  }
+
+  void controllerListener() {
+    final name = nameController.text;
+    final email = emailController.text;
+    final password = passwordController.text;
+    final confirmPassword = confirmPasswordController.text;
+
+    if (name.isEmpty &&
+        email.isEmpty &&
+        password.isEmpty &&
+        confirmPassword.isEmpty) return;
+
+    if (AppRegex.emailRegex.hasMatch(email) &&
+        AppRegex.passwordRegex.hasMatch(password) &&
+        AppRegex.passwordRegex.hasMatch(confirmPassword)) {
+      fieldValidNotifier.value = true;
+    } else {
+      fieldValidNotifier.value = false;
+    }
+  }
+
+  @override
+  void initState() {
+    initializeControllers();
+    super.initState();
+  }
 
   @override
   void dispose() {
-    _emailController.dispose();
-    _passwordController.dispose();
+    disposeControllers();
     super.dispose();
   }
 
-  Future<void> _register() async {
-    String email = _emailController.text.trim();
-    String password = _passwordController.text.trim();
+  Future<void> registerUser() async {
+    if (_formKey.currentState!.validate()) {
+      setState(() {
+        isLoading = true;
+      });
 
-    String? result =
-        await FirebaseRegister.registerWithEmailPassword(email, password);
-    setState(() {
-      _message = result;
-    });
+      final result = await FirebaseRegister.registerWithEmailPassword(
+        emailController.text,
+        passwordController.text,
+      );
+
+      setState(() {
+        isLoading = false; // Desativa o estado de carregamento
+      });
+
+      if (result == 'Registration successful') {
+        SnackbarHelper.showSnackBar(AppStrings.registrationComplete);
+        // Limpa os campos
+        nameController.clear();
+        emailController.clear();
+        passwordController.clear();
+        confirmPasswordController.clear();
+        // Navega para a tela de login ou outra tela
+        unawaited(NavigationHelper.pushReplacementNamed(AppRoutes.login));
+      } else {
+        SnackbarHelper.showSnackBar(result ?? 'Error occurred');
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Register')),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            TextField(
-              controller: _emailController,
-              decoration: InputDecoration(labelText: 'Email'),
-            ),
-            TextField(
-              controller: _passwordController,
-              decoration: InputDecoration(labelText: 'Password'),
-              obscureText: true,
-            ),
-            SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: _register,
-              child: Text('Register'),
-            ),
-            SizedBox(height: 20),
-            if (_message != null)
-              Text(
-                _message!,
-                style: TextStyle(
-                    color: _message == 'Registration successful'
-                        ? Colors.green
-                        : Colors.red),
+      body: ListView(
+        children: [
+          const GradientBackground(
+            children: [
+              Text(AppStrings.register, style: AppTheme.titleLarge),
+              SizedBox(height: 6),
+              Text(AppStrings.createYourAccount, style: AppTheme.bodySmall),
+            ],
+          ),
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  AppTextFormField(
+                    autofocus: true,
+                    labelText: AppStrings.name,
+                    keyboardType: TextInputType.name,
+                    textInputAction: TextInputAction.next,
+                    onChanged: (value) => _formKey.currentState?.validate(),
+                    validator: (value) {
+                      return value!.isEmpty
+                          ? AppStrings.pleaseEnterName
+                          : value.length < 4
+                              ? AppStrings.invalidName
+                              : null;
+                    },
+                    controller: nameController,
+                  ),
+                  AppTextFormField(
+                    labelText: AppStrings.email,
+                    controller: emailController,
+                    textInputAction: TextInputAction.next,
+                    keyboardType: TextInputType.emailAddress,
+                    onChanged: (_) => _formKey.currentState?.validate(),
+                    validator: (value) {
+                      return value!.isEmpty
+                          ? AppStrings.pleaseEnterEmailAddress
+                          : AppConstants.emailRegex.hasMatch(value)
+                              ? null
+                              : AppStrings.invalidEmailAddress;
+                    },
+                  ),
+                  ValueListenableBuilder<bool>(
+                    valueListenable: passwordNotifier,
+                    builder: (_, passwordObscure, __) {
+                      return AppTextFormField(
+                        obscureText: passwordObscure,
+                        controller: passwordController,
+                        labelText: AppStrings.password,
+                        textInputAction: TextInputAction.next,
+                        keyboardType: TextInputType.visiblePassword,
+                        onChanged: (_) => _formKey.currentState?.validate(),
+                        validator: (value) {
+                          return value!.isEmpty
+                              ? AppStrings.pleaseEnterPassword
+                              : AppConstants.passwordRegex.hasMatch(value)
+                                  ? null
+                                  : AppStrings.invalidPassword;
+                        },
+                        suffixIcon: Focus(
+                          descendantsAreFocusable: false,
+                          child: IconButton(
+                            onPressed: () =>
+                                passwordNotifier.value = !passwordObscure,
+                            style: IconButton.styleFrom(
+                              minimumSize: const Size.square(48),
+                            ),
+                            icon: Icon(
+                              passwordObscure
+                                  ? Icons.visibility_off_outlined
+                                  : Icons.visibility_outlined,
+                              color: Colors.black,
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                  ValueListenableBuilder(
+                    valueListenable: confirmPasswordNotifier,
+                    builder: (_, confirmPasswordObscure, __) {
+                      return AppTextFormField(
+                        labelText: AppStrings.confirmPassword,
+                        controller: confirmPasswordController,
+                        obscureText: confirmPasswordObscure,
+                        textInputAction: TextInputAction.done,
+                        keyboardType: TextInputType.visiblePassword,
+                        onChanged: (_) => _formKey.currentState?.validate(),
+                        validator: (value) {
+                          return value!.isEmpty
+                              ? AppStrings.pleaseReEnterPassword
+                              : AppConstants.passwordRegex.hasMatch(value)
+                                  ? passwordController.text ==
+                                          confirmPasswordController.text
+                                      ? null
+                                      : AppStrings.passwordNotMatched
+                                  : AppStrings.invalidPassword;
+                        },
+                        suffixIcon: Focus(
+                          descendantsAreFocusable: false,
+                          child: IconButton(
+                            onPressed: () => confirmPasswordNotifier.value =
+                                !confirmPasswordObscure,
+                            style: IconButton.styleFrom(
+                              minimumSize: const Size.square(48),
+                            ),
+                            icon: Icon(
+                              confirmPasswordObscure
+                                  ? Icons.visibility_off_outlined
+                                  : Icons.visibility_outlined,
+                              color: Colors.black,
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                  ValueListenableBuilder(
+                    valueListenable: fieldValidNotifier,
+                    builder: (_, isValid, __) {
+                      return FilledButton(
+                        onPressed: isValid && !isLoading ? registerUser : null,
+                        child: isLoading
+                            ? const CircularProgressIndicator()
+                            : const Text(AppStrings.register),
+                      );
+                    },
+                  ),
+                ],
               ),
-          ],
-        ),
+            ),
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                AppStrings.iHaveAnAccount,
+                style: AppTheme.bodySmall.copyWith(color: Colors.black),
+              ),
+              TextButton(
+                onPressed: () => NavigationHelper.pushReplacementNamed(
+                  AppRoutes.login,
+                ),
+                child: const Text(AppStrings.login),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }

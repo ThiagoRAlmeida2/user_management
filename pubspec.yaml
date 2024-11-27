@@ -17,6 +17,7 @@ dependencies:
   spider: ^4.2.2
   firebase_core: ^3.8.0
   firebase_auth: ^5.3.3
+  logger: ^1.0.0  
 
 
 dev_dependencies:
