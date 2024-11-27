@@ -30,6 +30,7 @@ class AppStrings {
   static const String password = 'Senha';
   static const String pleaseEnterPassword = 'Por favor, insira a senha';
   static const String invalidPassword =
+      // ignore: lines_longer_than_80_chars
       'A senha deve conter pelo menos 8 caracteres, incluindo uma letra maiúscula, um número e um caractere especial.';
 
   static const String confirmPassword = 'Confirmar Senha';

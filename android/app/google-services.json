@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "35342065988",
+    "project_id": "projeto-david-ee44d",
+    "storage_bucket": "projeto-david-ee44d.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:35342065988:android:1e2600c09e0fa7e0293711",
+        "android_client_info": {
+          "package_name": "com.example.login_register_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC9llh4WlxDohhHNj4SCoNOEE784m-8xA4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
