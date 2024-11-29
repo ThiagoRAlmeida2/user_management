@@ -1,13 +1,32 @@
 {
   "project_info": {
-    "project_number": "35342065988",
-    "project_id": "projeto-david-ee44d",
-    "storage_bucket": "projeto-david-ee44d.firebasestorage.app"
+    "project_number": "885070725547",
+    "project_id": "teste-54a29",
+    "storage_bucket": "teste-54a29.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:35342065988:android:1e2600c09e0fa7e0293711",
+        "mobilesdk_app_id": "1:885070725547:android:9bb51080126817c57c92ee",
+        "android_client_info": {
+          "package_name": "com.example.auth_bloc"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCESx3YyKdJ64QkrQ-NmGAgcbuwixduDdI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:885070725547:android:e851f45ecc75ea527c92ee",
         "android_client_info": {
           "package_name": "com.example.login_register_app"
         }
@@ -15,7 +34,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyC9llh4WlxDohhHNj4SCoNOEE784m-8xA4"
+          "current_key": "AIzaSyCESx3YyKdJ64QkrQ-NmGAgcbuwixduDdI"
         }
       ],
       "services": {
